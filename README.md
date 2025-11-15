@@ -57,7 +57,7 @@ pnpm docker:down
 
 ```bash
 # Start PostgreSQL with Docker only
-docker-compose up -d postgres
+docker compose up -d postgres
 
 # Start all applications in development mode
 pnpm dev
