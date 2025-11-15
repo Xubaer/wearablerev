@@ -1,0 +1,86 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: wearablerev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-adminpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-wearablerev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Strapi CMS
+  strapi:
+    build:
+      context: ./apps/strapi
+      dockerfile: Dockerfile
+    container_name: wearablerev-strapi
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${STRAPI_DB:-strapi}
+      DATABASE_USERNAME: ${POSTGRES_USER:-admin}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-adminpassword}
+      DATABASE_SSL: false
+      JWT_SECRET: ${STRAPI_JWT_SECRET:-changeme}
+      ADMIN_JWT_SECRET: ${STRAPI_ADMIN_JWT_SECRET:-changeme}
+      APP_KEYS: ${STRAPI_APP_KEYS:-changeme1,changeme2,changeme3,changeme4}
+      API_TOKEN_SALT: ${STRAPI_API_TOKEN_SALT:-changeme}
+      TRANSFER_TOKEN_SALT: ${STRAPI_TRANSFER_TOKEN_SALT:-changeme}
+    ports:
+      - "1337:1337"
+    volumes:
+      - ./apps/strapi:/app
+      - /app/node_modules
+      - strapi_uploads:/app/public/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Directus CMS
+  directus:
+    build:
+      context: ./apps/directus
+      dockerfile: Dockerfile
+    container_name: wearablerev-directus
+    restart: unless-stopped
+    environment:
+      KEY: ${DIRECTUS_KEY:-replace-with-random-value}
+      SECRET: ${DIRECTUS_SECRET:-replace-with-random-value}
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD:-d1r3ctu5}
+      DB_CLIENT: pg
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DIRECTUS_DB:-directus}
+      DB_USER: ${POSTGRES_USER:-admin}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-adminpassword}
+      WEBSOCKETS_ENABLED: true
+      PUBLIC_URL: ${DIRECTUS_PUBLIC_URL:-http://localhost:8055}
+    ports:
+      - "8055:8055"
+    volumes:
+      - directus_uploads:/directus/uploads
+      - directus_extensions:/directus/extensions
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  strapi_uploads:
+  directus_uploads:
+  directus_extensions:
