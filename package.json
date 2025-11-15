@@ -1,0 +1,16 @@
+{
+  "name": "wearablerev-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WearableRevolution.com monorepo with Next.js, Strapi, and Directus",
+  "scripts": {
+    "dev": "pnpm --parallel --stream -r dev",
+    "build": "pnpm -r build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
